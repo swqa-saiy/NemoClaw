@@ -627,7 +627,13 @@ configure_messaging_channels() {
   echo "[channels] Messaging channels active (baked at build time):" >&2
   [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && echo "[channels]   telegram (native)" >&2
   [ -n "${DISCORD_BOT_TOKEN:-}" ] && echo "[channels]   discord (native)" >&2
-  [ -n "${SLACK_BOT_TOKEN:-}" ] && echo "[channels]   slack (native)" >&2
+  if [ -n "${SLACK_BOT_TOKEN:-}" ]; then
+    if [ -n "${SLACK_APP_TOKEN:-}" ]; then
+      echo "[channels]   slack (native, socket-mode)" >&2
+    else
+      echo "[channels]   slack (native) [WARNING: SLACK_APP_TOKEN missing — socket mode will fail]" >&2
+    fi
+  fi
   return 0
 }
 
