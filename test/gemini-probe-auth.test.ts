@@ -8,10 +8,10 @@ import path from "node:path";
 
 import { getProbeAuthMode } from "../dist/lib/onboard";
 
-describe("Gemini dual-auth credential fix (issue #1960)", () => {
+describe("Gemini probe auth mode (issues #1960, #2093)", () => {
   describe("getProbeAuthMode", () => {
-    it("returns 'query-param' for gemini-api provider", () => {
-      expect(getProbeAuthMode("gemini-api")).toBe("query-param");
+    it("returns undefined for gemini-api (uses standard Bearer auth)", () => {
+      expect(getProbeAuthMode("gemini-api")).toBeUndefined();
     });
 
     it("returns undefined for non-Gemini providers", () => {
@@ -23,24 +23,18 @@ describe("Gemini dual-auth credential fix (issue #1960)", () => {
     });
   });
 
-  describe("compiled probe uses ?key= for Gemini instead of Bearer header", () => {
+  describe("compiled probe retains query-param codepath for future providers", () => {
     const onboardSrc = fs.readFileSync(
       path.join(import.meta.dirname, "..", "dist", "lib", "onboard.js"),
       "utf-8",
     );
 
     it("contains query-param auth mode logic in probeOpenAiLikeEndpoint", () => {
-      // The probe function must check for authMode === "query-param"
       expect(onboardSrc).toMatch(/authMode.*===.*"query-param"/);
     });
 
-    it("appends ?key= to the URL with encodeURIComponent when using query-param auth", () => {
-      // The compiled code must URL-encode the key when building ?key= URLs
+    it("has encodeURIComponent guard for query-param codepath", () => {
       expect(onboardSrc).toMatch(/\?key=.*encodeURIComponent/);
-    });
-
-    it("getProbeAuthMode returns query-param for gemini-api", () => {
-      expect(onboardSrc).toMatch(/gemini-api.*\?.*query-param|query-param.*gemini-api/);
     });
   });
 });

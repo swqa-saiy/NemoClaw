@@ -190,18 +190,18 @@ describe("provider model helpers", () => {
     });
   });
 
-  it("sends API key as ?key= query param when authMode is query-param (Gemini)", () => {
+  it("sends API key as Bearer header for Gemini (no authMode override, issue #2093)", () => {
     const result = fetchOpenAiLikeModels(
       "https://generativelanguage.googleapis.com/v1beta/openai/",
       "AIzaFakeKey123",
       {
-        authMode: "query-param",
         runCurlProbeImpl: (argv) => {
           const url = argv.at(-1);
           expect(url).toBe(
-            "https://generativelanguage.googleapis.com/v1beta/openai/models?key=AIzaFakeKey123",
+            "https://generativelanguage.googleapis.com/v1beta/openai/models",
           );
-          expect(argv.join(" ")).not.toContain("Authorization: Bearer");
+          expect(url).not.toContain("?key=");
+          expect(argv).toContain("Authorization: Bearer AIzaFakeKey123");
           return {
             ok: true,
             httpStatus: 200,
@@ -236,18 +236,17 @@ describe("provider model helpers", () => {
     });
   });
 
-  it("validates Gemini models with query-param auth when authMode is passed through", () => {
+  it("validates Gemini models with Bearer auth (issue #2093)", () => {
     const result = validateOpenAiLikeModel(
       "Google Gemini",
       "https://generativelanguage.googleapis.com/v1beta/openai/",
       "gemini-2.5-flash",
       "AIzaFakeKey123",
       {
-        authMode: "query-param",
         runCurlProbeImpl: (argv) => {
           const url = argv.at(-1);
-          expect(url).toContain("?key=AIzaFakeKey123");
-          expect(argv.join(" ")).not.toContain("Authorization: Bearer");
+          expect(url).not.toContain("?key=");
+          expect(argv).toContain("Authorization: Bearer AIzaFakeKey123");
           return {
             ok: true,
             httpStatus: 200,
